@@ -1,6 +1,19 @@
 const notesEl = document.querySelector('.notes');
 const addBtn = document.querySelector('.note-add');
 
+// 1. Функція для збереження всіх нотаток у LocalStorage
+function saveNotes() {
+    const notes = [];
+    document.querySelectorAll('.note').forEach(note => {
+        // Зчитуємо саме з textarea, бо там найактуальніший текст
+        const title = note.querySelector('#note-title-input').value;
+        const text = note.querySelector('#note-textarea').value;
+        notes.push({ title, text });
+    });
+    localStorage.setItem('myNotes', JSON.stringify(notes));
+    console.log('Збережено:', notes); // Для перевірки в консолі
+}
+
 function createNote(title, text) {
     const noteEl = document.createElement('div');
     noteEl.classList.add('note');
@@ -29,18 +42,23 @@ function createNote(title, text) {
 
         titleInputEl.classList.toggle('hidden');
         textInputEl.classList.toggle('hidden');
+
+        saveNotes(); // Зберігаємо при перемиканні
     });
 
     deleteBtn.addEventListener('click', (e) => {
         noteEl.remove();
+        saveNotes();
         });
 
         titleInputEl.addEventListener('input', (e) => {
             titleEl.innerText = e.target.value;
+            saveNotes();
         });
 
         textInputEl.addEventListener('input', (e) => {
             textEl.innerText = e.target.value;
+            saveNotes();
         });
 
         return noteEl;
@@ -51,5 +69,18 @@ function createNote(title, text) {
     addBtn.addEventListener('click', (e) => {
         const el = createNote("Назва", "Ваш текст");
         notesEl.appendChild(el);
-
+        saveNotes(); // Зберігаємо нову порожню нотатку
     })
+
+    // Завантаження при старті
+    function loadNotes() {
+        const savedNotes = JSON.parse(localStorage.getItem('myNotes'));
+        if (savedNotes) {
+            savedNotes.forEach(note => {
+                const el = createNote(note.title, note.text);
+                notesEl.appendChild(el);
+            });
+        }
+    }
+
+    loadNotes();
