@@ -187,7 +187,54 @@ function createNote(title, text) {
         }
     }
 
+        async function loadSharedNotes() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const shareId = urlParams.get('id');
+
+        if (!shareId) {
+            console.log("ID не знайдено в посиланні");
+            return;
+        }
+
+        console.log("Знайдено ID:", shareId);
+
+        // Додаємо невелику затримку, щоб Firebase точно ініціалізувався
+        if (!window.fbMethods || !window.db) {
+            console.log("Чекаю на Firebase...");
+            setTimeout(loadSharedNotes, 500);
+            return;
+        }
+
+        try {
+            const { doc, getDoc } = window.fbMethods;
+            const docRef = doc(window.db, "shared_notes", shareId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const sharedData = docSnap.data();
+                console.log("Дані отримано:", sharedData);
+                
+                // Очищуємо контейнер, якщо хочете показати ТІЛЬКИ отримані нотатки
+                // notesEl.innerHTML = ''; 
+
+                sharedData.notes.forEach(note => {
+                    const el = createNote(note.title, note.text);
+                    notesEl.appendChild(el);
+                });
+
+                alert("Ви отримали спільні нотатки!");
+                
+                // Видаляємо ID з URL, щоб при оновленні сторінки нотатки не додавалися знову
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                console.error("Документ не існує в базі Firebase!");
+            }
+        } catch (e) {
+            console.error("Помилка при читанні з бази:", e);
+        }
+    }
+
     // Викликаємо перевірку після завантаження основних нотаток
     checkSharedNotes();
-
+    loadSharedNotes();
     loadNotes();
