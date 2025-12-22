@@ -60,3 +60,49 @@ body {
 .hidden {
   display: none;
 }
+
+/* Стилізація полів введення всередині нотатки */
+#note-title-input, 
+#note-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.5); /* Напівпрозорий білий фон */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-family: inherit;
+  padding: 5px;
+  resize: none; /* Користувач не зможе розтягувати поле вручну */
+  outline: none;
+}
+
+/* Специфічні налаштування для заголовка */
+#note-title-input {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 8px;
+  height: 40px;
+}
+
+/* Специфічні налаштування для основного тексту */
+#note-textarea {
+  height: 200px;
+  font-size: 14px;
+}
+
+/* Покращення відображення тексту, коли він не в режимі редагування */
+#note-title {
+  font-weight: bold;
+  word-wrap: break-word; /* Щоб довгі слова не виходили за межі */
+}
+
+#note-text {
+  white-space: pre-wrap; /* Зберігає переноси рядків */
+  word-wrap: break-word;
+  margin-top: 10px;
+}
+
+/* Ефект при фокусі на поле */
+#note-title-input:focus, 
+#note-textarea:focus {
+  background: white;
+  border-color: #3498db;
+}
