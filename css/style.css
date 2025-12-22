@@ -106,3 +106,28 @@ body {
   background: white;
   border-color: #3498db;
 }
+
+.selectable {
+    cursor: pointer;
+    border: 2px dashed #3498db;
+}
+
+.selected {
+    border: 3px solid #2ecc71 !important;
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.btn {
+    padding: 8px 15px;
+    margin-right: 10px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    background: #3498db;
+    color: white;
+}
