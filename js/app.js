@@ -4,27 +4,34 @@ let selectedNotes = new Set();
 const selectBtn = document.getElementById('select-mode-btn');
 const shareBtn = document.getElementById('share-btn');
 const countSpan = document.getElementById('count');
-
 const notesEl = document.querySelector('.notes');
 const addBtn = document.querySelector('.note-add');
 
-// 1. Функція для збереження всіх нотаток у LocalStorage
+// Елементи модального вікна
+const modal = document.getElementById('share-modal');
+const shareInput = document.getElementById('share-url');
+const copyBtn = document.getElementById('copy-btn');
+const closeBtn = document.getElementById('close-modal');
+
+// 1. Збереження у LocalStorage
 function saveNotes() {
     const notes = [];
     document.querySelectorAll('.note').forEach(note => {
-        // Зчитуємо саме з textarea, бо там найактуальніший текст
         const title = note.querySelector('#note-title-input').value;
         const text = note.querySelector('#note-textarea').value;
         notes.push({ title, text });
     });
     localStorage.setItem('myNotes', JSON.stringify(notes));
-    console.log('Збережено:', notes); // Для перевірки в консолі
 }
 
+// 2. Створення нотатки
 function createNote(title, text) {
     const noteEl = document.createElement('div');
     noteEl.classList.add('note');
-    noteEl.innerHTML = ` <div class="note-header">
+    if (isSelectMode) noteEl.classList.add('selectable');
+
+    noteEl.innerHTML = `
+    <div class="note-header">
         <p id="note-title">${title}</p>
         <textarea id="note-title-input" class="hidden">${title}</textarea>
         <div class="note-actions">
@@ -34,7 +41,7 @@ function createNote(title, text) {
     </div>
     <p id="note-text">${text}</p>
     <textarea id="note-textarea" class="hidden">${text}</textarea>
-    `
+    `;
 
     const editBtn = noteEl.querySelector(".note-edit");
     const deleteBtn = noteEl.querySelector(".note-delete");
@@ -44,197 +51,167 @@ function createNote(title, text) {
     const textInputEl = noteEl.querySelector("#note-textarea");
 
     editBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Щоб не спрацьовував вибір нотатки
         titleEl.classList.toggle('hidden');
         textEl.classList.toggle('hidden');
-
         titleInputEl.classList.toggle('hidden');
         textInputEl.classList.toggle('hidden');
-
-        saveNotes(); // Зберігаємо при перемиканні
+        saveNotes();
     });
 
     deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         noteEl.remove();
         saveNotes();
-        });
-
-        titleInputEl.addEventListener('input', (e) => {
-            titleEl.innerText = e.target.value;
-            saveNotes();
-        });
-
-        textInputEl.addEventListener('input', (e) => {
-            textEl.innerText = e.target.value;
-            saveNotes();
-        });
-
-        noteEl.addEventListener('click', () => {
-            if (isSelectMode) {
-                noteEl.classList.toggle('selected');
-                const noteData = { title, text };
-                
-                // Додаємо або видаляємо з набору
-                if (noteEl.classList.contains('selected')) {
-                    selectedNotes.add(noteEl);
-                } else {
-                    selectedNotes.delete(noteEl);
-                }
-                updateShareButton();
-            }
-        });
-        return noteEl;
-    }
-
-    addBtn.addEventListener('click', (e) => {
-        const el = createNote("Назва", "Ваш текст");
-        notesEl.appendChild(el);
-        saveNotes(); // Зберігаємо нову порожню нотатку
-    })
-
-    
-
-    // Завантаження при старті
-    function loadNotes() {
-        const savedNotes = JSON.parse(localStorage.getItem('myNotes'));
-        if (savedNotes) {
-            savedNotes.forEach(note => {
-                const el = createNote(note.title, note.text);
-                notesEl.appendChild(el);
-            });
-        }
-    }
-
-    // Функція перемикання режиму вибору
-    selectBtn.addEventListener('click', () => {
-        isSelectMode = !isSelectMode;
-        selectBtn.innerText = isSelectMode ? "Скасувати" : "Вибрати";
-        shareBtn.classList.toggle('hidden', !isSelectMode);
-        
-        document.querySelectorAll('.note').forEach(note => {
-            note.classList.toggle('selectable', isSelectMode);
-            note.classList.remove('selected');
-        });
-        selectedNotes.clear();
-        updateShareButton();
     });
 
-    function updateShareButton() {
+    titleInputEl.addEventListener('input', (e) => {
+        titleEl.innerText = e.target.value;
+        saveNotes();
+    });
+
+    textInputEl.addEventListener('input', (e) => {
+        textEl.innerText = e.target.value;
+        saveNotes();
+    });
+
+    // Логіка вибору нотатки
+    noteEl.addEventListener('click', () => {
+        if (isSelectMode) {
+            noteEl.classList.toggle('selected');
+            if (noteEl.classList.contains('selected')) {
+                selectedNotes.add(noteEl);
+            } else {
+                selectedNotes.delete(noteEl);
+            }
+            updateShareButton();
+        }
+    });
+
+    return noteEl;
+}
+
+// 3. Кнопка "Додати"
+addBtn.addEventListener('click', () => {
+    const el = createNote("Назва", "Ваш текст");
+    notesEl.appendChild(el);
+    saveNotes();
+});
+
+// 4. Завантаження локальних нотаток
+function loadNotes() {
+    const savedNotes = JSON.parse(localStorage.getItem('myNotes'));
+    if (savedNotes) {
+        savedNotes.forEach(note => {
+            const el = createNote(note.title, note.text);
+            notesEl.appendChild(el);
+        });
+    }
+}
+
+// 5. Режим вибору
+selectBtn.addEventListener('click', () => {
+    isSelectMode = !isSelectMode;
+    selectBtn.innerText = isSelectMode ? "Скасувати" : "Вибрати";
+    shareBtn.classList.toggle('hidden', !isSelectMode);
+    
+    document.querySelectorAll('.note').forEach(note => {
+        note.classList.toggle('selectable', isSelectMode);
+        note.classList.remove('selected');
+    });
+    selectedNotes.clear();
+    updateShareButton();
+});
+
+function updateShareButton() {
     countSpan.innerText = selectedNotes.size;
     shareBtn.disabled = selectedNotes.size === 0;
 }
 
-// Функція надсилання в Firebase
-   shareBtn.addEventListener('click', async () => {
-        if (selectedNotes.size === 0) return;
+// 6. Надсилання в Firebase та показ модалки
+shareBtn.addEventListener('click', async () => {
+    if (selectedNotes.size === 0) return;
 
-        const notesToShare = [];
-        selectedNotes.forEach(noteEl => {
-            notesToShare.push({
-                title: noteEl.querySelector('#note-title').innerText,
-                text: noteEl.querySelector('#note-text').innerText
-            });
+    const notesToShare = [];
+    selectedNotes.forEach(noteEl => {
+        notesToShare.push({
+            title: noteEl.querySelector('#note-title').innerText,
+            text: noteEl.querySelector('#note-text').innerText
+        });
+    });
+
+    try {
+        const { collection, addDoc } = window.fbMethods;
+        const docRef = await addDoc(collection(window.db, "shared_notes"), {
+            notes: notesToShare,
+            createdAt: new Date()
         });
 
-        try {
-            // Використовуємо методи, які ми "прокинули" з модуля
-            const { collection, addDoc } = window.fbMethods;
-            
-            // Створюємо документ у колекції "shared_notes"
-            const docRef = await addDoc(collection(window.db, "shared_notes"), {
-                notes: notesToShare,
-                createdAt: new Date()
+        // Замість prompt відкриваємо модалку
+        const shareLink = `${window.location.origin}${window.location.pathname}?id=${docRef.id}`;
+        shareInput.value = shareLink;
+        modal.classList.remove('hidden');
+        
+        selectBtn.click(); // Вимикаємо режим вибору
+
+    } catch (e) {
+        console.error("Помилка Firebase:", e);
+        alert("Помилка: перевірте консоль або правила Firestore.");
+    }
+});
+
+// 7. Логіка кнопок модального вікна
+copyBtn.addEventListener('click', () => {
+    shareInput.select();
+    navigator.clipboard.writeText(shareInput.value);
+    
+    // Візуальний відгук
+    const icon = copyBtn.querySelector('i');
+    icon.classList.replace('fa-copy', 'fa-check');
+    copyBtn.style.background = '#27ae60';
+    
+    setTimeout(() => {
+        icon.classList.replace('fa-check', 'fa-copy');
+        copyBtn.style.background = '#2ecc71';
+    }, 2000);
+});
+
+closeBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+});
+
+// 8. Завантаження спільних нотаток (об'єднана функція)
+async function loadSharedNotes() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareId = urlParams.get('id');
+
+    if (!shareId) return;
+
+    if (!window.fbMethods || !window.db) {
+        setTimeout(loadSharedNotes, 500);
+        return;
+    }
+
+    try {
+        const { doc, getDoc } = window.fbMethods;
+        const docRef = doc(window.db, "shared_notes", shareId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const sharedData = docSnap.data();
+            sharedData.notes.forEach(note => {
+                const el = createNote(note.title, note.text);
+                notesEl.appendChild(el);
             });
-
-            // Генеруємо посилання
-            const shareLink = `${window.location.origin}${window.location.pathname}?id=${docRef.id}`;
-            
-            // Виводимо результат
-            prompt("Ось ваше посилання для друзів:", shareLink);
-            
-            // Вимикаємо режим вибору
-            selectBtn.click(); 
-
-        } catch (e) {
-            console.error("Помилка:", e);
-            alert("Ой! Щось пішло не так. Перевірте, чи увімкнено 'Test Mode' у Firebase Firestore.");
+            saveNotes();
+            alert("Ви отримали спільні нотатки!");
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-    });
-        async function checkSharedNotes() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const shareId = urlParams.get('id');
-
-        if (shareId) {
-            const { doc, getDoc } = window.fbMethods;
-            const docRef = doc(window.db, "shared_notes", shareId);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                // Очищуємо екран від старих нотаток (опціонально)
-                // notesEl.innerHTML = ''; 
-                
-                data.notes.forEach(note => {
-                    const el = createNote(note.title, note.text);
-                    notesEl.appendChild(el);
-                });
-                alert("Ви отримали спільні нотатки!");
-                
-                // Очищуємо URL без перезавантаження
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } else {
-                console.log("Такої нотатки не існує");
-            }
-        }
+    } catch (e) {
+        console.error("Помилка завантаження:", e);
     }
+}
 
-        async function loadSharedNotes() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const shareId = urlParams.get('id');
-
-        if (!shareId) {
-            console.log("ID не знайдено в посиланні");
-            return;
-        }
-
-        console.log("Знайдено ID:", shareId);
-
-        // Додаємо невелику затримку, щоб Firebase точно ініціалізувався
-        if (!window.fbMethods || !window.db) {
-            console.log("Чекаю на Firebase...");
-            setTimeout(loadSharedNotes, 500);
-            return;
-        }
-
-        try {
-            const { doc, getDoc } = window.fbMethods;
-            const docRef = doc(window.db, "shared_notes", shareId);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const sharedData = docSnap.data();
-                console.log("Дані отримано:", sharedData);
-                
-                // Очищуємо контейнер, якщо хочете показати ТІЛЬКИ отримані нотатки
-                // notesEl.innerHTML = ''; 
-
-                sharedData.notes.forEach(note => {
-                    const el = createNote(note.title, note.text);
-                    notesEl.appendChild(el);
-                });
-
-                alert("Ви отримали спільні нотатки!");
-                
-                // Видаляємо ID з URL, щоб при оновленні сторінки нотатки не додавалися знову
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } else {
-                console.error("Документ не існує в базі Firebase!");
-            }
-        } catch (e) {
-            console.error("Помилка при читанні з бази:", e);
-        }
-    }
-
-    // Викликаємо перевірку після завантаження основних нотаток
-    checkSharedNotes();
-    loadSharedNotes();
-    loadNotes();
+// Запуск при завантаженні сторінки
+loadNotes();
+loadSharedNotes();
