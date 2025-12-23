@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +10,9 @@
       rel="stylesheet"
     />
     <link
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css"
-    rel="stylesheet"
-  />
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css"
+      rel="stylesheet"
+    />
     <title>Notes App</title>
   </head>
   <body>
@@ -25,37 +25,51 @@
           <button class="note-add" type="button"><i class="fa-solid fa-plus"></i></button>
         </div>
       </div>
-      <script type="module">
-        // Імпортуємо необхідні модулі
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { 
-          getFirestore, 
-          collection, 
-          addDoc, 
-          getDoc, 
-          doc 
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyCIA4nwiyO-sjeOAKFHLHhR9_gbpRXX4yg",
-          authDomain: "note-app-op.firebaseapp.com",
-          projectId: "note-app-op",
-          storageBucket: "note-app-op.firebasestorage.app",
-          messagingSenderId: "363868833064",
-          appId: "1:363868833064:web:36a9598cc3cac09afc3c1d",
-          measurementId: "G-F01HCTG4E3"
-        };
-
-        // Ініціалізація
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Експортуємо функції у глобальну область, щоб app.js міг їх бачити
-        window.db = db;
-        window.fbMethods = { collection, addDoc, getDoc, doc };
-      </script>
       <div class="notes"></div>
     </div>
+
+    <div id="share-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Поділитися нотатками</h3>
+        <p>Ваше посилання готове:</p>
+        <div class="copy-box">
+          <input type="text" id="share-url" readonly />
+          <button id="copy-btn" title="Скопіювати">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
+        <button id="close-modal" class="btn-close">Закрити</button>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        getDoc, 
+        doc 
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCIA4nwiyO-sjeOAKFHLHhR9_gbpRXX4yg",
+        authDomain: "note-app-op.firebaseapp.com",
+        projectId: "note-app-op",
+        storageBucket: "note-app-op.firebasestorage.app",
+        messagingSenderId: "363868833064",
+        appId: "1:363868833064:web:36a9598cc3cac09afc3c1d",
+        measurementId: "G-F01HCTG4E3"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      window.db = db;
+      window.fbMethods = { collection, addDoc, getDoc, doc };
+    </script>
+    
     <script src="js/app.js"></script>
   </body>
 </html>
